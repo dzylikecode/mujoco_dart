@@ -1,0 +1,11 @@
+name: mujoco_dart
+description: MuJoCo native, WASM and Flutter packages in one Dart workspace.
+publish_to: none
+environment:
+  sdk: ^3.13.0
+workspace:
+  - packages/mujoco
+  - packages/mujoco_web
+  - packages/mujoco_flutter
+  - packages/mujoco_viewer
+  - examples/viewer

@@ -1,0 +1,26 @@
+name: mujoco_web
+description: Official MuJoCo WASM assets and browser loader for Flutter.
+version: 0.1.0
+repository: https://github.com/dzylikecode/mujoco_dart/tree/main/packages/mujoco_web
+resolution: workspace
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  web: ^1.1.0
+dev_dependencies:
+  archive: ^4.6.0
+  crypto: ^3.0.7
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  assets:
+    - path: assets/bootstrap.js
+      platforms: [web]
+    - path: assets/mujoco.js
+      platforms: [web]
+    - path: assets/mujoco.wasm
+      platforms: [web]

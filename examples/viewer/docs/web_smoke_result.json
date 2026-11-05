@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "version": "3.12.0",
+  "geoms": 9,
+  "meshes": 1,
+  "checks": [
+    "gravity",
+    "fixed step",
+    "geom poses",
+    "control arrays",
+    "actuator metadata",
+    "mesh snapshots",
+    "body force views",
+    "sensor metadata",
+    "disposed views",
+    "VFS assets",
+    "public VFS ownership and reuse",
+    "Flutter viewer mounted"
+  ],
+  "errors": [],
+  "resources": [
+    {
+      "url": "http://127.0.0.1:8237/flutter_bootstrap.js",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8237/assets/packages/mujoco_web/assets/bootstrap.js",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8237/assets/packages/mujoco_web/assets/mujoco.js",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8237/assets/packages/mujoco_web/assets/mujoco.wasm",
+      "status": 200
+    }
+  ]
+}

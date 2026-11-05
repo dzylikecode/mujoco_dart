@@ -1,0 +1,17 @@
+name: mujoco_flutter
+description: Unified native and WASM MuJoCo initialization for Flutter.
+version: 0.1.0
+repository: https://github.com/dzylikecode/mujoco_dart/tree/main/packages/mujoco_flutter
+resolution: workspace
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  mujoco: ^0.1.0
+  mujoco_web: ^0.1.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

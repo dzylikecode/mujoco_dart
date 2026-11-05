@@ -1,0 +1,21 @@
+# Dart / Flutter generated files and package-local locks
+.dart_tool/
+.pub/
+.pub-cache/
+.flutter-plugins-dependencies
+**/build/
+**/coverage/
+**/doc/api/
+/packages/*/pubspec.lock
+/examples/*/pubspec.lock
+# Native build caches; upstream source files and WASM assets remain tracked
+.xmake/
+dist/
+ref_code/
+.cache/
+# IDE and local files
+.idea/
+*.iml
+.DS_Store
+*.log
+*.swp

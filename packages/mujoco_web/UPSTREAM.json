@@ -1,0 +1,19 @@
+{
+  "package": "@mujoco/mujoco",
+  "version": "3.12.0",
+  "source": "https://registry.npmjs.org/@mujoco/mujoco/-/mujoco-3.12.0.tgz",
+  "integrity": "sha512-MPBSdhD7XsVkKD2owRlzf2mZzd8Qiz7v3zK9MaPc6X7ZS7LdBpQ5bgmdSrvXy6AsKHGlSocWRP9UmdV/I5+cZA==",
+  "license": "Apache-2.0",
+  "files": {
+    "mujoco.js": "214dd7ead76aecd6e9b6525b2b83eca88e9ed3b893231361b4f1e2716a123a0a",
+    "mujoco.wasm": "70f991e34b22674611d0cba181a9afb7b66914557c0817d5b5b0f7de10e6d548"
+  },
+  "patches": [
+    {
+      "file": "mujoco.js",
+      "description": "Register missing Emscripten memory_view<bool> as one-byte Uint8Array on first use",
+      "sha256": "225364ee8c0c4aa07d8acd60e1f5cc36b34f08852619f2c6157dda74329e18ab",
+      "script": "tool/patch_bool_views.dart"
+    }
+  ]
+}

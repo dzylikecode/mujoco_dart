@@ -1,0 +1,295 @@
+{
+    __meta__ = {
+        version = "1.0"
+    },
+    ["linux|arm64"] = {
+        ["cmake#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "4.3.4"
+        },
+        ["libccd#7b33ad89"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v2.1"
+        },
+        ["lodepng#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2025.05.06"
+        },
+        ["marchingcubecpp#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2023.09.12"
+        },
+        ["miniz#59e1cab3"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "3.1.1"
+        },
+        ["mujoco 3.12.0#0c98e9f2"] = {
+            repo = {
+                url = "xmake_repo"
+            },
+            version = "3.12.0"
+        },
+        ["ninja#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.13.2"
+        },
+        ["pkg-config#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "0.29.2"
+        },
+        ["qhull#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2020.2"
+        },
+        ["tinyobjloader#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v2.0.0rc13"
+        },
+        ["tinyxml2#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "11.0.0"
+        },
+        ["trianglemeshdistance#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2025.12.06"
+        }
+    },
+    ["linux|x86_64"] = {
+        ["cmake#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "4.3.4"
+        },
+        ["libccd#7b33ad89"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v2.1"
+        },
+        ["lodepng#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2025.05.06"
+        },
+        ["marchingcubecpp#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2023.09.12"
+        },
+        ["miniz#59e1cab3"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "3.1.1"
+        },
+        ["mujoco 3.12.0#a90ed702"] = {
+            repo = {
+                url = "xmake_repo"
+            },
+            version = "3.12.0"
+        },
+        ["ninja#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v1.13.2"
+        },
+        ["pkg-config#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "0.29.2"
+        },
+        ["qhull#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2020.2"
+        },
+        ["tinyobjloader#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "v2.0.0rc13"
+        },
+        ["tinyxml2#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "11.0.0"
+        },
+        ["trianglemeshdistance#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "a32d7e4ed13b8bbb8563c5cc4ee415fa333fd040",
+                url = "https://github.com/xmake-io/xmake-repo.git"
+            },
+            version = "2025.12.06"
+        }
+    },
+    ["macosx|arm64"] = {
+        ["cmake#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "4.3.4"
+        },
+        ["libccd#7b33ad89"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "v2.1"
+        },
+        ["lodepng#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "2025.05.06"
+        },
+        ["marchingcubecpp#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "2023.09.12"
+        },
+        ["miniz#59e1cab3"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "3.1.1"
+        },
+        ["mujoco 3.12.0#16fb575b"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "3.12.0"
+        },
+        ["ninja#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "v1.13.2"
+        },
+        ["pkg-config#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "0.29.2"
+        },
+        ["qhull#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "2020.2"
+        },
+        ["tinyobjloader#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "v2.0.0rc13"
+        },
+        ["tinyxml2#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "11.0.0"
+        },
+        ["trianglemeshdistance#f56260b5"] = {
+            repo = {
+                branch = "master",
+                commit = "df24fa68c5c76af39e27a4bbcdf5e1f150a09c2a",
+                url = "https://gitee.com/tboox/xmake-repo.git"
+            },
+            version = "2025.12.06"
+        }
+    }
+}

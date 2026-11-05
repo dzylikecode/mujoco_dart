@@ -1,0 +1,22 @@
+{
+  "dartWasmLoaded": true,
+  "resources": [
+    {
+      "url": "https://www.gstatic.com/flutter-canvaskit/cf636b1dfb818dd6a3ff16e390e93b1a036969c8/skwasm.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8237/main.dart.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8237/assets/packages/mujoco_web/assets/mujoco.js",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:8237/assets/packages/mujoco_web/assets/mujoco.wasm",
+      "status": 200
+    }
+  ],
+  "errors": []
+}
