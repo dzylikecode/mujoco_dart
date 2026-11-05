@@ -11015,6 +11015,38 @@ enum mjtTexture {
   };
 }
 
+enum mjtTextureRole {
+  mjTEXROLE_USER(0),
+  mjTEXROLE_RGB(1),
+  mjTEXROLE_OCCLUSION(2),
+  mjTEXROLE_ROUGHNESS(3),
+  mjTEXROLE_METALLIC(4),
+  mjTEXROLE_NORMAL(5),
+  mjTEXROLE_OPACITY(6),
+  mjTEXROLE_EMISSIVE(7),
+  mjTEXROLE_RGBA(8),
+  mjTEXROLE_ORM(9),
+  mjNTEXROLE(10);
+
+  final int value;
+  const mjtTextureRole(this.value);
+
+  static mjtTextureRole fromValue(int value) => switch (value) {
+    0 => mjTEXROLE_USER,
+    1 => mjTEXROLE_RGB,
+    2 => mjTEXROLE_OCCLUSION,
+    3 => mjTEXROLE_ROUGHNESS,
+    4 => mjTEXROLE_METALLIC,
+    5 => mjTEXROLE_NORMAL,
+    6 => mjTEXROLE_OPACITY,
+    7 => mjTEXROLE_EMISSIVE,
+    8 => mjTEXROLE_RGBA,
+    9 => mjTEXROLE_ORM,
+    10 => mjNTEXROLE,
+    _ => throw ArgumentError('Unknown value for mjtTextureRole: $value'),
+  };
+}
+
 enum mjtTrn {
   mjTRN_JOINT(0),
   mjTRN_JOINTINPARENT(1),

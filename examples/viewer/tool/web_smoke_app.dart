@@ -47,6 +47,56 @@ class _SmokeState extends State<Smoke> {
       final s = sim!;
       check(s.version == '3.12.0', 'WASM version mismatch');
       check(s.geomCount == 9 && s.model.nmesh == 1, 'Wrong demo model');
+      final floor = s.model.geomById(0);
+      check(
+        floor.colorTextureId >= 0 && floor.textureUniform,
+        'Ground material metadata failed',
+      );
+      final texture = s.model.textureById(floor.colorTextureId);
+      check(
+        texture.type == MjTextureType.twoD &&
+            texture.width == 512 &&
+            texture.height == 512,
+        'Compiled ground texture layout failed',
+      );
+      check(
+        texture.pixels.length ==
+            texture.width * texture.height * texture.channels,
+        'Compiled ground texture pixels failed',
+      );
+      check(
+        floor.textureRepeat[0] == 1 && floor.textureRepeat[1] == 1,
+        'Ground repeat failed',
+      );
+      final textureModel = MjModel.from_xml_string(
+        '''<mujoco><asset>
+        <texture name="sky" type="skybox" builtin="gradient" rgb1="0 0 0" rgb2="1 1 1" width="4" height="4"/>
+        <texture name="check" type="2d" builtin="checker" rgb1="1 0 0" rgb2="0 0 1" width="8" height="8"/>
+        <material name="floor" texture="check" texrepeat="2 3" texuniform="true"/>
+        </asset><worldbody><geom type="plane" size="2 3 .1" material="floor"/></worldbody></mujoco>''',
+      );
+      try {
+        final geom = textureModel.geomById(0);
+        final copied = textureModel.textureById(geom.colorTextureId);
+        check(
+          geom.colorTextureId == 1 &&
+              copied.channels == 3 &&
+              copied.pixels.length == 192,
+          'Nonzero texture address failed',
+        );
+        final colors = <String>{};
+        for (var i = 0; i < copied.pixels.length; i += 3) {
+          colors.add(copied.pixels.sublist(i, i + 3).join(','));
+        }
+        check(
+          colors.contains('255,0,0') && colors.contains('0,0,255'),
+          'Compiled checker colors failed',
+        );
+        textureModel.dispose();
+        check(copied.pixels.length == 192, 'Texture snapshot lifetime failed');
+      } finally {
+        textureModel.dispose();
+      }
       final z = s.data.qpos[3];
       for (var i = 0; i < 100; i++) {
         s.singleStep();
@@ -230,6 +280,7 @@ class _SmokeState extends State<Smoke> {
             'sensor metadata',
             'disposed views',
             'VFS assets',
+            'compiled ground texture and repeat',
             'public VFS ownership and reuse',
             'Flutter viewer mounted',
           ],

@@ -1,3 +1,7 @@
+## Unreleased — authored ground textures
+
+- Render plane surfaces at the compiled pose with authored 2D textures, repeat settings and colors; remove the solid floor-color override.
+
 ## Unreleased — application-owned simulation loop
 
 - Remove the public MujocoSimulation helper and simulation.dart entry point; playback logic lives in examples/viewer only.

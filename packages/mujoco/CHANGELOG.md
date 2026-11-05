@@ -1,3 +1,12 @@
+## Unreleased — authored ground textures
+
+- Expose compiled texture snapshots and geom texture repeat metadata on native/web.
+
+## Unreleased — internal backend integration
+
+- Remove the js.dart and native.dart public entry points.
+- Keep WASM registration behind an internal hook used by mujoco_flutter; expose numerical APIs through mujoco.dart only.
+
 ## Unreleased — explicit loading
 
 - Add MjSpec and C-style parse/compile/load functions; retain thin from_xml_string/from_xml_path factories. Remove implicit assets-map loading in favor of explicit VFS.

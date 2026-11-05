@@ -40,11 +40,23 @@ class MjGeomInfo {
     required this.roughness,
     required this.meshId,
     required this.materialId,
+    this.colorTextureId = -1,
+    this.textureRepeat = const [1, 1],
+    this.textureUniform = false,
   });
   final int id, type, group, meshId, materialId;
   final String name;
   final List<double> size, rgba;
   final double metallic, roughness;
+
+  /// The base-color texture index, or -1 when no texture is assigned.
+  final int colorTextureId;
+
+  /// The material's two-dimensional texture repetition factors.
+  final List<double> textureRepeat;
+
+  /// Whether texture repetition is relative to spatial units.
+  final bool textureUniform;
 }
 
 /// Compiled mesh triangles in the owning geom frame, with per-corner normals.
@@ -53,3 +65,23 @@ class MjMeshInfo {
   final Float32List positions, normals;
   int get triangleCount => positions.length ~/ 9;
 }
+
+/// The texture layouts used by MuJoCo.
+enum MjTextureType { twoD, cube, skybox }
+
+/// The color encoding of compiled texture pixels.
+enum MjTextureColorSpace { linear, srgb }
+
+/// A copied snapshot of compiled texture pixels and their layout.
+///
+/// Pixels retain MuJoCo's row order and channel count. The snapshot owns no
+/// engine memory and remains readable after model disposal.
+class const MjTextureInfo({
+  required final int id,
+  required final MjTextureType type,
+  required final MjTextureColorSpace colorSpace,
+  required final int width,
+  required final int height,
+  required final int channels,
+  required final Uint8List pixels,
+});

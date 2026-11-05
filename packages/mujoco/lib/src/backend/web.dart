@@ -3,6 +3,8 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
+
 import '../base.dart';
 import '../model_info.dart';
 import '../owner.dart';
@@ -12,6 +14,7 @@ JSObject? _installed;
 
 /// Registers the resolved official `loadMujoco()` module before creating models.
 /// A process uses one WASM instance so existing model/data handles stay valid.
+@internal
 void initializeMujocoJs(JSObject module) {
   if (_installed != null && !_installed!.strictEquals(module).toDart) {
     throw StateError('A different MuJoCo WASM module is already registered');
@@ -350,6 +353,60 @@ class MjModelWeb with DisposableOwner implements MjModel {
       roughness: mat < 0 ? 0.6 : _at(handle, 'mat_roughness', mat),
       meshId: _iat(handle, 'geom_dataid', id),
       materialId: mat,
+      colorTextureId: mat < 0 ? -1 : _colorTextureId(mat),
+      textureRepeat: mat < 0
+          ? const [1, 1]
+          : List.generate(2, (i) => _at(handle, 'mat_texrepeat', 2 * mat + i)),
+      textureUniform: mat >= 0 && _iat(handle, 'mat_texuniform', mat) != 0,
+    );
+  }
+
+  int _colorTextureId(int materialId) {
+    final roles = _obj(_module, 'mjtTextureRole');
+    final stride = _integer(_obj(roles, 'mjNTEXROLE'), 'value');
+    final rgbSlot = _integer(_obj(roles, 'mjTEXROLE_RGB'), 'value');
+    final rgbaSlot = _integer(_obj(roles, 'mjTEXROLE_RGBA'), 'value');
+    final rgb = _iat(handle, 'mat_texid', stride * materialId + rgbSlot);
+    return rgb >= 0
+        ? rgb
+        : _iat(handle, 'mat_texid', stride * materialId + rgbaSlot);
+  }
+
+  @override
+  int get ntex => _int('ntex');
+
+  @override
+  MjTextureInfo textureById(int id) {
+    check();
+    RangeError.checkValidIndex(id, this, 'id', ntex);
+    final width = _iat(handle, 'tex_width', id),
+        height = _iat(handle, 'tex_height', id);
+    final channels = _iat(handle, 'tex_nchannel', id);
+    // mjtSize arrays are BigInt64Array in the official WASM binding. Memory
+    // offsets fit exactly in Number because this module uses 32-bit pointers.
+    final address = globalContext
+        .callMethod<JSNumber>(
+          'Number'.toJS,
+          _get(_obj(handle, 'tex_adr'), '$id'),
+        )
+        .toDartInt;
+    final pixels = (_get(handle, 'tex_data') as JSUint8Array).toDart;
+    return MjTextureInfo(
+      id: id,
+      type: MjTextureType.values[_iat(handle, 'tex_type', id)],
+      colorSpace: _iat(handle, 'tex_colorspace', id) == 2
+          ? MjTextureColorSpace.srgb
+          : MjTextureColorSpace.linear,
+      width: width,
+      height: height,
+      channels: channels,
+      pixels: Uint8List.fromList(
+        Uint8List.sublistView(
+          pixels,
+          address,
+          address + width * height * channels,
+        ),
+      ),
     );
   }
 

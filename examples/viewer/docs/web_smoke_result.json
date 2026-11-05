@@ -14,6 +14,7 @@
     "sensor metadata",
     "disposed views",
     "VFS assets",
+    "compiled ground texture and repeat",
     "public VFS ownership and reuse",
     "Flutter viewer mounted"
   ],

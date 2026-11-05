@@ -2,7 +2,11 @@
 
 Flutter package containing the official **MuJoCo 3.12.0 single-threaded WASM** and its ESM loader. No Python, CDN, npm installation or custom script tags are needed at application runtime.
 
-Use `MujocoFlutter.initialize()` from `mujoco_flutter` for normal Flutter apps. Browser-specific integrations can call `MujocoWeb.initialize()` from `package:mujoco_web/browser.dart`, which resolves to the loaded JavaScript module. Register that module with `initializeMujocoJs` from `package:mujoco/js.dart` to use the pure Dart model API.
+Use `MujocoFlutter.initialize()` from `mujoco_flutter` for Flutter apps.
+It loads the WASM module and registers it through the numerical package's
+internal platform handshake. Applications then use the public `mujoco.dart`
+API. `MujocoWeb.initialize()` from `package:mujoco_web/browser.dart` remains the
+low-level engine asset loader used by the platform integration package.
 
 Assets are served under `assets/packages/mujoco_web/assets/` relative to the document base URI. Override the loader's `assetBase` directory URL for custom hosting. Serve `.wasm` as `application/wasm`. The single-threaded build does not require COOP/COEP headers. Assets are declared web-only, so native Flutter builds do not bundle the 10MB WASM binary.
 

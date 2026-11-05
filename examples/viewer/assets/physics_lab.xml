@@ -6,10 +6,13 @@
     <joint damping="0.12"/>
   </default>
   <asset>
+    <texture name="ground" type="2d" builtin="checker" width="512" height="512"
+             rgb1=".2 .3 .4" rgb2=".1 .15 .2" mark="cross" markrgb=".8 .8 .8"/>
+    <material name="ground" texture="ground" texrepeat="1 1" texuniform="true"/>
     <mesh name="tetra" vertex="0 0 0  0.3 0 0  0 0.3 0  0 0 0.4"/>
   </asset>
   <worldbody>
-    <geom name="floor" type="plane" size="4 4 0.1" rgba="0.18 0.23 0.28 1"/>
+    <geom name="floor" type="plane" size="4 4 0.1" material="ground"/>
     <body name="support" pos="-1 0 0">
       <geom type="box" pos="0 0 0.08" size="0.45 0.4 0.08" rgba="0.3 0.4 0.45 1"/>
       <geom type="cylinder" pos="0 0 1" size="0.07 0.99" rgba="0.5 0.6 0.65 1"/>

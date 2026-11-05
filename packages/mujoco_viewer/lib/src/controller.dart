@@ -6,6 +6,8 @@ import 'package:vector_math/vector_math.dart' as vm;
 import 'package:flutter/foundation.dart';
 import 'package:mujoco/mujoco.dart';
 
+import 'plane_surface.dart';
+
 // MuJoCo is Z-up. Convert the complete world once, preserving the compiled
 // geom/mesh coordinate frames: (x, y, z) -> (x, z, -y).
 vm.Matrix4 geomTransform(List<double> p, List<double> r) => vm.Matrix4(
@@ -73,6 +75,7 @@ class MujocoViewerController extends ChangeNotifier {
   );
   final Map<int, scene.Node> nodes = {};
   final Map<int, scene.Geometry> _meshCache = {};
+  final Map<int, scene.Texture2D> _textureCache = {};
   final List<String> warnings = [];
   final Set<int> groups = {};
   final Set<int> hiddenGroups = {};
@@ -86,13 +89,15 @@ class MujocoViewerController extends ChangeNotifier {
     final scale = vm.Vector3.all(1);
     // Native MuJoCo type numbers are stable in its C ABI.
     switch (type) {
-      case 0: // Plane: MuJoCo can be infinite; render a finite patch.
-        geometry = scene.CuboidGeometry(
-          vm.Vector3(
-            size[0] > 0 ? size[0] * 2 : 20,
-            size[1] > 0 ? size[1] * 2 : 20,
-            0.02,
-          ),
+      case 0:
+        final surface = planeSurface(
+          geom,
+          infiniteHalfExtent: math.max(20, model.extent * 4),
+        );
+        geometry = scene.MeshGeometry.fromArrays(
+          positions: surface.positions,
+          normals: surface.normals,
+          texCoords: surface.texCoords,
         );
       case 2:
         geometry = scene.SphereGeometry(radius: size[0]);
@@ -118,16 +123,28 @@ class MujocoViewerController extends ChangeNotifier {
         warnings.add('${model.geomById(id).name}: unsupported geom type $type');
         return;
     }
-    final matId = geom.materialId;
     final rgba = geom.rgba;
     final material = scene.PhysicallyBasedMaterial()
       ..baseColorFactor = vm.Vector4(rgba[0], rgba[1], rgba[2], rgba[3])
       ..metallicFactor = geom.metallic
       ..roughnessFactor = geom.roughness;
-    // Authored floor textures are not imported yet. A neutral fallback keeps
-    // a white default material from washing out the robot against the floor.
-    if (type == 0 && matId >= 0) {
-      material.baseColorFactor = vm.Vector4(0.13, 0.18, 0.23, 1);
+    if (type == 0 && geom.colorTextureId >= 0) {
+      final textureId = geom.colorTextureId;
+      final texture = model.textureById(textureId);
+      if (texture.type == MjTextureType.twoD) {
+        material.baseColorTexture = _textureCache.putIfAbsent(
+          textureId,
+          () => scene.Texture2D.fromPixels(
+            textureRgba(texture),
+            texture.width,
+            texture.height,
+          ),
+        );
+      } else {
+        warnings.add(
+          '${geom.name}: plane texture ${texture.type.name} is not supported',
+        );
+      }
     }
     final shape = scene.Node(mesh: scene.Mesh(geometry, material))
       ..scale = scale;
@@ -138,7 +155,6 @@ class MujocoViewerController extends ChangeNotifier {
         math.pi / 2,
       );
     }
-    if (type == 0) shape.position = vm.Vector3(0, 0, -0.01);
     final node = scene.Node(name: model.geomById(id).name)..add(shape);
     nodes[id] = node;
     groups.add(geom.group);
@@ -193,6 +209,10 @@ class MujocoViewerController extends ChangeNotifier {
   @override
   void dispose() {
     world.dispose();
+    root.removeAll();
+    nodes.clear();
+    _meshCache.clear();
+    _textureCache.clear();
     super.dispose();
   }
 }

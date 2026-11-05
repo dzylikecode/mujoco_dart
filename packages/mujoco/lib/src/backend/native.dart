@@ -232,6 +232,49 @@ class MjModelNative(final Pointer<g.mjModel> ptr)
       roughness: mat < 0 ? 0.6 : m.mat_roughness[mat],
       meshId: m.geom_dataid[id],
       materialId: mat,
+      colorTextureId: mat < 0 ? -1 : _colorTextureId(mat),
+      textureRepeat: mat < 0
+          ? const [1, 1]
+          : (m.mat_texrepeat + 2 * mat).asTypedList(2).toList(),
+      textureUniform: mat >= 0 && m.mat_texuniform[mat],
+    );
+  }
+
+  int _colorTextureId(int materialId) {
+    final roles =
+        ptr.ref.mat_texid + materialId * g.mjtTextureRole.mjNTEXROLE.value;
+    final rgb = roles[g.mjtTextureRole.mjTEXROLE_RGB.value];
+    return rgb >= 0 ? rgb : roles[g.mjtTextureRole.mjTEXROLE_RGBA.value];
+  }
+
+  @override
+  int get ntex {
+    _check();
+    return ptr.ref.ntex;
+  }
+
+  @override
+  MjTextureInfo textureById(int id) {
+    _check();
+    RangeError.checkValidIndex(id, this, 'id', ntex);
+    final m = ptr.ref;
+    final width = m.tex_width[id], height = m.tex_height[id];
+    final channels = m.tex_nchannel[id];
+    return MjTextureInfo(
+      id: id,
+      type: MjTextureType.values[m.tex_type[id]],
+      colorSpace:
+          m.tex_colorspace[id] == g.mjtColorSpace.mjCOLORSPACE_SRGB.value
+          ? MjTextureColorSpace.srgb
+          : MjTextureColorSpace.linear,
+      width: width,
+      height: height,
+      channels: channels,
+      pixels: Uint8List.fromList(
+        (m.tex_data + m.tex_adr[id]).cast<Uint8>().asTypedList(
+          width * height * channels,
+        ),
+      ),
     );
   }
 

@@ -31,6 +31,9 @@ Future<void> main() async {
           node.isIncluded = true;
           node.recordUse = true;
         },
+        enumClass: (node) {
+          if (node.originalName == 'mjtTextureRole') node.isIncluded = true;
+        },
         struct: (node) {
           node.isIncluded = true;
         },

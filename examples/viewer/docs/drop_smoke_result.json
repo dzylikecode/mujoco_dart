@@ -4,10 +4,7 @@
     "real folder drop",
     "relative include and mesh",
     "first XML selected",
-    "second XML switched",
-    "single XML file drop",
-    "multiple file drop",
-    "broken XML error and recovery"
+    "second XML switched"
   ],
   "errors": [],
   "names": [
@@ -42,7 +39,7 @@
     "MuJoCo viewer",
     "robot/02_box.xml",
     "MuJoCo 3.12.0 · WASM",
-    "t 0.000 s · dt 0.002 s 7 qpos / 6 DOF / 0 controls 2/2 geoms · 0 contacts 8 FPS · step + sync 0.00 ms",
+    "t 0.000 s · dt 0.002 s 7 qpos / 6 DOF / 0 controls 2/2 geoms · 0 contacts 10 FPS · step + sync 0.00 ms",
     "Run",
     "Step",
     "Reset",
@@ -61,7 +58,7 @@
     "MuJoCo viewer",
     "robot/02_box.xml",
     "MuJoCo 3.12.0 · WASM",
-    "t 0.000 s · dt 0.002 s 7 qpos / 6 DOF / 0 controls 2/2 geoms · 0 contacts 8 FPS · step + sync 0.00 ms",
+    "t 0.000 s · dt 0.002 s 7 qpos / 6 DOF / 0 controls 2/2 geoms · 0 contacts 10 FPS · step + sync 0.00 ms",
     "Run",
     "Step",
     "Reset",

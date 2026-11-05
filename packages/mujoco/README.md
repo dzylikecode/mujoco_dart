@@ -141,9 +141,11 @@ JavaScript/WASM module through conditional imports. There is no Python backend,
 `py_embed` dependency, global backend switch, or `python.dart` entry point.
 
 For Flutter, call `MujocoFlutter.initialize()` from `mujoco_flutter` before using
-models; on native this is a no-op. Plain Dart browser applications can load the
-official ESM module and register it through `initializeMujocoJs(module)` from
-`package:mujoco/js.dart`. The numerical package itself has no Flutter dependency.
+models; on native this is a no-op. Browser module registration is an internal
+handshake with the platform integration package. Applications import
+`package:mujoco/mujoco.dart`; raw FFI bindings, native pointers and JS backend
+classes are implementation details. The numerical package itself has no Flutter
+dependency.
 
 ```dart
 final model = MjModel.from_xml_path('robot.xml');
@@ -185,3 +187,11 @@ Use `MjVfs.addBuffer` to supply in-memory model resources on both backends.
 Native paths can read the host filesystem; browser paths refer to MuJoCo's WASM
 filesystem or an explicitly supplied VFS. Flutter applications choose their own
 AssetBundle or network loading, then add the resulting bytes to the VFS.
+
+## Compiled textures
+
+`model.ntex` and `textureById(id)` expose copied texture pixels, dimensions, channel
+count, texture type and color space on native and web. `MjGeomInfo` carries the
+base-color texture ID and the material's `textureRepeat` / `textureUniform`
+settings. Snapshots do not borrow engine memory and remain readable after model
+disposal. The numerical package does not upload textures or depend on Flutter.

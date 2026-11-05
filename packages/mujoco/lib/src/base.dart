@@ -205,6 +205,12 @@ abstract interface class MjModel {
 
   int get ngeom;
   int get nmesh;
+
+  /// The number of compiled texture assets.
+  int get ntex;
+
+  /// Copies a compiled texture, including builtin checker and file textures.
+  MjTextureInfo textureById(int id);
   List<double> get center;
   double get extent;
   MjGeomInfo geomById(int id);
