@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:mujoco/mujoco.dart' as mj;
 
@@ -20,6 +21,36 @@ class MujocoSimulation {
   final mj.MjModel model;
   late final mj.MjData data;
   bool _disposed = false;
+  final _states = StreamController<mj.MjSceneState>.broadcast();
+  Stream<mj.MjSceneState> get states => _states.stream;
+  mj.MjSceneState get state => mj.MjSceneState.fromData(data);
+  Timer? _timer;
+  final _clock = Stopwatch();
+  double stepMilliseconds = 0;
+
+  void start() {
+    if (_disposed) throw StateError('Simulation is disposed');
+    if (_timer != null) return;
+    _clock
+      ..reset()
+      ..start();
+    _timer = Timer.periodic(const Duration(milliseconds: 8), (_) {
+      final seconds = _clock.elapsedMicroseconds / 1000000;
+      _clock.reset();
+      final watch = Stopwatch()..start();
+      advance(seconds);
+      stepMilliseconds = watch.elapsedMicroseconds / 1000;
+    });
+  }
+
+  void pause() {
+    _timer?.cancel();
+    _timer = null;
+    _clock.stop();
+  }
+
+  void _publish() => _states.add(state);
+
   double _accumulator = 0;
   double speed = 1;
   double motor = 0;
@@ -41,7 +72,10 @@ class MujocoSimulation {
       count++;
     }
     if (count == 100) _accumulator = 0;
-    if (count > 0) mj.mj_forward(model, data);
+    if (count > 0) {
+      mj.mj_forward(model, data);
+      _publish();
+    }
   }
 
   void _step() {
@@ -55,6 +89,7 @@ class MujocoSimulation {
     // mj_step integrates qpos after computing geom poses; refresh them so the
     // viewer and qpos refer to the same instant, including while paused.
     mj.mj_forward(model, data);
+    _publish();
   }
 
   void reset({bool demoPose = false}) {
@@ -63,11 +98,13 @@ class MujocoSimulation {
     steps = 0;
     _accumulator = 0;
     mj.mj_forward(model, data);
+    _publish();
   }
 
   void kick() {
     if (model.nv > 0) data.qvel[0] += 2;
     mj.mj_forward(model, data);
+    _publish();
   }
 
   String geomName(int id) => model.geomById(id).name;
@@ -79,6 +116,8 @@ class MujocoSimulation {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
+    pause();
+    unawaited(_states.close());
     data.dispose();
     model.dispose();
   }

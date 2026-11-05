@@ -50,16 +50,24 @@ class _ViewerState extends State<Viewer> {
     text: const String.fromEnvironment('MUJOCO_MODEL'),
   );
   Timer? stats;
-  bool playing = false;
+  bool _playing = false;
+  bool get playing => _playing;
+  set playing(bool value) {
+    _playing = value;
+    if (value) {
+      simulation?.start();
+    } else {
+      simulation?.pause();
+    }
+  }
+
   bool loading = true;
   bool demo = true;
   bool _released = false;
   String? error;
   String modelName = 'Physics lab';
-  double stepMilliseconds = 0;
-  int frames = 0;
-  int fps = 0;
   int generation = 0;
+  double viewerFps = 0;
 
   @override
   void initState() {
@@ -67,10 +75,7 @@ class _ViewerState extends State<Viewer> {
     load(path.text.isEmpty ? null : path.text);
     stats = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
-        setState(() {
-          fps = frames;
-          frames = 0;
-        });
+        setState(() {});
       }
     });
   }
@@ -98,7 +103,6 @@ class _ViewerState extends State<Viewer> {
       candidate.reset(demoPose: filename == null);
       candidateScene = await MujocoViewerController.create(
         model: candidate.model,
-        data: candidate.data,
       );
       if (!mounted) {
         candidateScene.dispose();
@@ -119,6 +123,7 @@ class _ViewerState extends State<Viewer> {
         selectedXml = source == null ? null : filename;
         loading = false;
         playing = filename == null;
+        viewerFps = 0;
         generation++;
       });
       previousScene?.dispose();
@@ -189,17 +194,6 @@ class _ViewerState extends State<Viewer> {
     },
   );
 
-  void tick(double dt) {
-    final sim = simulation;
-    final view = rendering;
-    if (sim == null || view == null || loading || readingDrop) return;
-    final watch = Stopwatch()..start();
-    if (playing) sim.advance(dt);
-    watch.stop();
-    stepMilliseconds = watch.elapsedMicroseconds / 1000;
-    frames++;
-  }
-
   void release() {
     if (_released) return;
     _released = true;
@@ -248,7 +242,7 @@ class _ViewerState extends State<Viewer> {
               't ${sim.time.toStringAsFixed(3)} s  ·  dt ${sim.timestep} s\n'
               '${sim.model.nq} qpos  /  ${sim.model.nv} DOF  /  ${sim.model.nu} controls\n'
               '${view?.nodes.length}/${sim.geomCount} geoms  ·  ${sim.contacts} contacts\n'
-              '$fps FPS  ·  step + sync ${stepMilliseconds.toStringAsFixed(2)} ms',
+              '${viewerFps.toStringAsFixed(1)} FPS  ·  step ${sim.stepMilliseconds.toStringAsFixed(2)} ms',
               style: const TextStyle(
                 color: Colors.white54,
                 height: 1.8,
@@ -272,7 +266,6 @@ class _ViewerState extends State<Viewer> {
                       ? null
                       : () => setState(() {
                           sim.singleStep();
-                          view?.sync();
                         }),
                   child: const Text('Step'),
                 ),
@@ -281,7 +274,6 @@ class _ViewerState extends State<Viewer> {
                       ? null
                       : () => setState(() {
                           sim.reset(demoPose: demo);
-                          view?.sync();
                         }),
                   child: const Text('Reset'),
                 ),
@@ -401,9 +393,14 @@ class _ViewerState extends State<Viewer> {
             : rendering == null
             ? const Center(child: Text('Load a MuJoCo model to begin'))
             : MujocoViewer(
+                model: simulation!.model,
+                states: simulation!.states,
+                initialState: simulation!.state,
                 controller: rendering!,
+                onStats: (stats) {
+                  if (mounted) setState(() => viewerFps = stats.fps);
+                },
                 key: ValueKey(generation),
-                onTick: (_, dt) => tick(dt),
               ),
       ),
       const Positioned(

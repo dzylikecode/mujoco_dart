@@ -1,41 +1,58 @@
 # mujoco_viewer
 
-A Flutter visualization package built on Flutter Scene, using the public MuJoCo model/data API on native and web. The former Python `launch_passive` viewer and Python dependencies have been removed.
+A Flutter Scene viewer for a static MuJoCo model and a stream of immutable scene states, on native and web.
 
 ```dart
-import 'package:mujoco_flutter/mujoco_flutter.dart';
-import 'package:mujoco_viewer/mujoco_viewer.dart';
-
 await MujocoFlutter.initialize();
-// Prepare a VFS containing robot.xml and its referenced assets.
 final model = MjModel.from_xml_path('robot.xml', vfs: vfs);
 final data = MjData(model);
 mj_forward(model, data);
-final controller = await MujocoViewerController.create(model: model, data: data);
-// Place inside bounded Flutter layout constraints:
-final widget = MujocoViewer(controller: controller);
+final states = StreamController<MjSceneState>.broadcast();
+final initialState = MjSceneState.fromData(data);
+
+// Place inside bounded Flutter layout constraints.
+final widget = MujocoViewer(
+  model: model,
+  states: states.stream,
+  initialState: initialState,
+);
+
+// In your independent physics loop, after advancing a batch of fixed steps:
+mj_forward(model, data);
+states.add(MjSceneState.fromData(data));
 ```
 
-The widget is passive: it displays caller-owned state and synchronizes geom poses each frame. The application owns the physics loop. For example, advance the same model/data above at a fixed timestep:
+Import `dart:async`, `package:flutter/widgets.dart`, `package:mujoco_flutter/mujoco_flutter.dart`, and `package:mujoco_viewer/mujoco_viewer.dart`. The widget creates and owns its controller by default. For camera/group controls, create `MujocoViewerController.create(model: model)` and pass `controller:`; dispose that external controller after unmounting the widget.
+
+Physics stepping, snapshot publication and rendering have separate schedules. The viewer retains only the latest received state and applies it at the next render frame. It never reads live `MjData` or advances physics. `initialState` is optional; without it, the surface stays empty until the first stream event. This also avoids losing an initial pose emitted before a broadcast stream is subscribed. Stream completion retains the final pose. Errors appear in the viewer, and a subsequent valid state resumes rendering. Replacing the stream cancels the previous subscription; replacing the model rebuilds the scene. Snapshots must come from the corresponding model; geom counts are checked, but same-sized models cannot be distinguished.
+
+`MjSceneState.fromData(data)` copies packed geom positions and row-major rotations in MuJoCo Z-up coordinates. Its arrays are immutable, contain no native pointers, and remain valid after the source data/model is disposed. Run `mj_forward` after editing qpos or integrating steps before publishing. Snapshot publication need not happen on every physics step. For isolate/worker transport, reconstruct `MjSceneState(time:, positions:, rotations:)` from the received numerical payload.
+
+The application owns model/data and the state producer. Stop production and unmount the widget before disposing external controllers and numerical resources. The viewer cancels its subscription but never closes the caller's stream. The example's timer is independent of rendering, while still sharing the UI isolate; true CPU isolation requires a separate isolate/worker.
+
+The controller exposes camera and display controls:
 
 ```dart
-double accumulator = 0;
+final controller = await MujocoViewerController.create(model: model);
 final widget = MujocoViewer(
+  model: model,
+  states: states.stream,
+  initialState: initialState,
   controller: controller,
-  onTick: (_, dt) {
-    accumulator += dt.clamp(0.0, 0.05);
-    while (accumulator >= model.timestep) {
-      mj_step(model, data);
-      accumulator -= model.timestep;
-    }
-    mj_forward(model, data);
-  },
+  maxFrameRate: 60, // Rendering only; physics keeps its own schedule.
+  onStats: (stats) => print('${stats.fps} FPS'),
 );
+controller.focusOn(x: 0, y: 0, z: 1); // MuJoCo Z-up world coordinates.
+controller.orbit.orbitBy(0.2, 0.1); // Azimuth/elevation deltas in radians.
+controller.orbit.dollyBy(1); // Positive zooms in, negative zooms out.
+controller.orbit.panBy(const Offset(0.1, 0)); // Viewport-relative panning.
+controller.frameModel(); // Reframe model bounds, preserving the viewing angle.
+controller.setGroup(3, true);
 ```
 
-Unmount the widget, dispose its controller, then dispose caller-owned data and model. The controller never disposes physics resources. It validates that data belongs to the supplied model. The full application in `examples/viewer` keeps its playback controls and demo behavior inside the example.
+`onStats` reports measured render-loop FPS, average frame interval, interval count, and the latest snapshot's simulation time about once per second. It measures SceneView tick cadence, not physical display presentation or GPU completion. Empty/loading surfaces do not emit reports; paused physics still renders and reports FPS. `maxFrameRate` must be finite and positive, or null to follow display refresh. No per-frame parent rebuild is required.
 
-Supports orbit/pan/zoom; `frameModel`, `setGroup`, and `sync` are available on the controller. It reads compiled geom poses, primitive sizes, PBR colors and mesh triangles through portable API snapshots. The scene root converts MuJoCo Z-up to Scene Y-up once. It does not parse MJCF or recompute robot forward kinematics.
+`controller.camera.projection` supports Flutter Scene perspective/orthographic projections. `orbit` exposes gesture speed, smoothing and distance limits; its raw target is Scene Y-up, so use `focusOn` for MuJoCo coordinates. User drag/scroll gestures remain enabled. These controls only change visualization. Custom rendering loops can call controller `update(state)` and `sync(aspectRatio:)`. The scene root converts MuJoCo Z-up to Scene Y-up once; it does not recompute forward kinematics. See `example/main.dart` for a timer-driven example and `examples/viewer` for playback, drop loading, and model switching.
 
 Supported geometry: plane, sphere, capsule, ellipsoid, cylinder, box and triangle mesh. Unsupported geom kinds are listed in `controller.warnings`. Infinite plane axes follow the camera with frustum-sized patches, snapped to whole texture periods so the ground remains visually continuous. Positive plane sizes retain their authored finite extent. Plane geoms use actual flat surfaces at the compiled pose. Authored 2D base-color textures (including MuJoCo builtin checker/cross images) are copied from the compiled model and rendered with texrepeat/texuniform mapping, mipmaps and color-space conversion. Untextured planes keep their authored RGBA; no forced floor color is applied. Cube/skybox textures, non-plane texture mapping, authored lights, hfields, flex, tendons and contact-force overlays are not implemented yet. This is not yet a full replacement for every feature of the original MuJoCo viewer.
 

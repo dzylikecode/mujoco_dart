@@ -17,24 +17,17 @@ void main() {
       expect((actual - expected).length, lessThan(1e-10));
     },
   );
-  test('Viewer rejects mismatched model and data before allocating scene resources', () async {
-    const xml =
-        '<mujoco><worldbody><geom type="sphere" size=".1"/></worldbody></mujoco>';
-    final first = compileXml(xml), second = compileXml(xml);
-    final data = MjData(first);
-    try {
+  test(
+    'Viewer rejects a disposed model before allocating scene resources',
+    () async {
+      final model = compileXml('<mujoco/>');
+      model.dispose();
       await expectLater(
-        MujocoViewerController.create(model: second, data: data),
-        throwsArgumentError,
+        MujocoViewerController.create(model: model),
+        throwsStateError,
       );
-      expect(data.time, 0);
-      expect(first.isDisposed, isFalse);
-    } finally {
-      data.dispose();
-      first.dispose();
-      second.dispose();
-    }
-  });
+    },
+  );
 }
 
 MjModel compileXml(String xml, {MjVfs? vfs}) {

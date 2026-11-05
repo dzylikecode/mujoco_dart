@@ -17,6 +17,9 @@
     "compiled ground texture and repeat",
     "public VFS ownership and reuse",
     "Flutter viewer mounted",
+    "latest streamed state and no live data reads",
+    "render FPS reports and independent cap",
+    "camera focus, orbit and dolly controls",
     "infinite plane follows distant camera without moving physics"
   ],
   "errors": [],

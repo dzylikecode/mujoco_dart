@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:mujoco_flutter/mujoco_flutter.dart';
 import 'package:mujoco_viewer/mujoco_viewer.dart';
@@ -15,58 +17,58 @@ class Example extends StatefulWidget {
 class _ExampleState extends State<Example> {
   MjModel? model;
   MjData? data;
+  MjSceneState? initialState;
+  final states = StreamController<MjSceneState>.broadcast();
+  Timer? timer;
+  final clock = Stopwatch();
   double accumulator = 0;
-  MujocoViewerController? viewer;
   Object? error;
+
   @override
   void initState() {
     super.initState();
-    _load();
+    unawaited(_load());
   }
 
   Future<void> _load() async {
-    MjModel? loadedModel;
-    MjData? loadedData;
-    MujocoViewerController? controller;
     try {
       await MujocoFlutter.initialize();
-      final spec = mj_parseXMLString('''<mujoco><worldbody>
-        <geom type="plane" size="3 3 0.1"/>
+      if (!mounted) return;
+      final model = MjModel.from_xml_string('''<mujoco><worldbody>
+        <geom type="plane" size="0 0 0.1"/>
         <body pos="0 0 1"><freejoint/><geom type="sphere" size="0.2"/></body>
       </worldbody></mujoco>''');
-      try {
-        loadedModel = mj_compile(spec);
-      } finally {
-        spec.dispose();
-      }
-      loadedData = MjData(loadedModel);
-      mj_forward(loadedModel, loadedData);
-      controller = await MujocoViewerController.create(
-        model: loadedModel,
-        data: loadedData,
-      );
-      if (!mounted) {
-        controller.dispose();
-        loadedData.dispose();
-        loadedModel.dispose();
-        return;
-      }
-      setState(() {
-        model = loadedModel;
-        data = loadedData;
-        viewer = controller;
+      this.model = model;
+      final data = MjData(model);
+      this.data = data;
+      mj_forward(model, data);
+      initialState = MjSceneState.fromData(data);
+      clock.start();
+      // Physics runs independently of SceneView's render callbacks.
+      timer = Timer.periodic(const Duration(milliseconds: 8), (_) {
+        accumulator += (clock.elapsedMicroseconds / 1000000).clamp(0.0, .05);
+        clock.reset();
+        var changed = false;
+        while (accumulator >= model.timestep) {
+          mj_step(model, data);
+          accumulator -= model.timestep;
+          changed = true;
+        }
+        if (changed) {
+          mj_forward(model, data);
+          states.add(MjSceneState.fromData(data));
+        }
       });
+      setState(() {});
     } catch (e) {
-      controller?.dispose();
-      loadedData?.dispose();
-      loadedModel?.dispose();
       if (mounted) setState(() => error = e);
     }
   }
 
   @override
   void dispose() {
-    viewer?.dispose();
+    timer?.cancel();
+    unawaited(states.close());
     data?.dispose();
     model?.dispose();
     super.dispose();
@@ -75,20 +77,12 @@ class _ExampleState extends State<Example> {
   @override
   Widget build(BuildContext context) => ColoredBox(
     color: const Color(0xff10171d),
-    child: viewer == null
+    child: model == null || initialState == null
         ? Center(child: Text(error == null ? 'Loading MuJoCo…' : '$error'))
         : MujocoViewer(
-            controller: viewer!,
-            onTick: (_, dt) {
-              final model = this.model!;
-              final data = this.data!;
-              accumulator += dt.clamp(0.0, 0.05);
-              while (accumulator >= model.timestep) {
-                mj_step(model, data);
-                accumulator -= model.timestep;
-              }
-              mj_forward(model, data);
-            },
+            model: model!,
+            states: states.stream,
+            initialState: initialState,
           ),
   );
 }

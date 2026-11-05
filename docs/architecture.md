@@ -31,7 +31,9 @@ model/data 仅通过显式、幂等的 `dispose()` 释放；数组和位姿视�
 
 `geomById/meshById` 返回与平台无关的数据；native 指针与生成的 FFI 绑定保留在 `lib/src` 实现层。数据的实时借用视图在 owner 释放后拒绝访问。公共物理函数拒绝 model/data 不配对的调用。Web 视图每次访问时重新取得 WASM typed array，避免内存增长后持有失效的视图。
 
-`MujocoViewer` 是被动 Widget；调用者可以在 `onTick` 中推进数值，也可以显示其他循环产生的状态。仿真循环由应用管理；`examples/viewer/lib/simulation.dart` 仅为示例内部的播放控制，不属于任何包的公开 API。释放顺序为：卸载 Widget → controller → data → model；controller 不拥有数值资源。
+`MujocoViewer(model:, states:, initialState:, controller:)` 消费 `Stream<MjSceneState>`，不再接收 data 或通过 onTick 驱动物理。`MjSceneState` 是纯 Dart、无指针、拥有内存的不可变位姿快照；数值对象没有内置通知。Viewer 合并多次状态更新，在自己的下一帧只应用最新状态。Widget 管理订阅和默认创建的 controller；外部 controller 由调用者管理。示例使用独立定时器推进物理、批量发布快照，暂停/单步/重置沿用相同状态流；定时器仍在 UI isolate。`examples/viewer/lib/simulation.dart` 仅为示例内部的播放控制，不属于任何包的公开 API。停止状态生产并卸载 Widget 后，再释放外部 controller、data 和 model。
+
+Viewer 通过 `onStats` 按约一秒窗口输出渲染 tick FPS 与平均帧间隔；`maxFrameRate` 只限制渲染。相机操作通过 controller 的 `orbit`、`camera` 和 `frameModel()` 提供，`focusOn(x:, y:, z:)` 使用 MuJoCo Z-up 坐标。
 
 ## 本次移除与保留
 
@@ -44,7 +46,7 @@ model/data 仅通过显式、幂等的 `dispose()` 释放；数组和位姿视�
 
 已验证 Linux x64 native 与 Chromium Web：数值步进、资源释放、控制数组、传感器、VFS 模型资产、mesh 与共享 Viewer。原生 AOT 资产裁剪脚本验证了“使用原生调用时打包库、未使用时移除库”。
 
-单元/回归测试：核心包 18 项、Flutter 资产接入 1 项、Viewer 10 项、实验应用 12 项；浏览器 smoke 另有物理/数组/元数据/VFS/绘制检查。浏览器测试入口和日志位于示例 `examples/viewer/tool/web_smoke_app.dart`、`examples/viewer/tool/run_web_smoke.mjs`、`examples/viewer/docs/web_smoke_result.json`。
+单元/回归测试：核心包 20 项、Flutter 资产接入 1 项、Viewer 15 项、实验应用 13 项；浏览器 smoke 另有物理/数组/元数据/VFS/绘制检查。浏览器测试入口和日志位于示例 `examples/viewer/tool/web_smoke_app.dart`、`examples/viewer/tool/run_web_smoke.mjs`、`examples/viewer/docs/web_smoke_result.json`。
 
 尚未实现完整原生 MuJoCo viewer 的所有功能。非平面纹理、cube/skybox、原模型照明、hfield/flex/tendon、接触力箭头等仍待扩展；无限地面使用覆盖视锥、随相机移动的网格，并按纹理周期对齐；模型的物理位姿不变。地面已接入模型编译后的 2D 纹理与 texrepeat/texuniform，不再强制覆盖颜色或添加厚度。没有站立策略或稳定控制器，机器人按 Run 后可能倒地。数值循环仍在调用者 isolate；后续可把 native 数值放到独立 isolate、Web 数值放到 worker，再通过位姿快照同步 Viewer。其他 native 平台尚未实机验证。
 

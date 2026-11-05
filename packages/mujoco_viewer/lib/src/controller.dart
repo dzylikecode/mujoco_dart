@@ -32,21 +32,13 @@ vm.Matrix4 geomTransform(List<double> p, List<double> r) => vm.Matrix4(
 vm.Vector3 viewerPosition(List<double> p) => vm.Vector3(p[0], p[2], -p[1]);
 
 class MujocoViewerController extends ChangeNotifier {
-  static Future<MujocoViewerController> create({
-    required MjModel model,
-    required MjData data,
-  }) async {
-    if (!identical(model, data.model)) {
-      throw ArgumentError('Data belongs to a different model');
-    }
-    if (model.isDisposed || data.isDisposed) {
-      throw StateError('Model or data is disposed');
-    }
+  static Future<MujocoViewerController> create({required MjModel model}) async {
+    if (model.isDisposed) throw StateError('Model is disposed');
     await scene.Scene.initializeStaticResources();
-    return MujocoViewerController._(model, data);
+    return MujocoViewerController._(model);
   }
 
-  MujocoViewerController._(this.model, this.data) {
+  MujocoViewerController._(this.model) {
     root.rotation = vm.Quaternion.axisAngle(vm.Vector3(1, 0, 0), -math.pi / 2);
     world.add(root);
     cameraNode.addComponent(camera);
@@ -60,16 +52,21 @@ class MujocoViewerController extends ChangeNotifier {
     for (final group in groups.where((g) => g >= 3)) {
       setGroup(group, false);
     }
-    sync();
     frameModel();
   }
 
   final MjModel model;
-  final MjData data;
   final world = scene.Scene();
   final root = scene.Node(name: 'MuJoCo Z-up world');
   final cameraNode = scene.Node(name: 'Viewer camera');
+
+  /// The render camera, including its perspective or orthographic projection.
   final camera = scene.CameraComponent();
+
+  /// The orbit controls for rotation, dolly and screen-relative panning.
+  ///
+  /// Angles use radians. Its raw target uses Scene Y-up coordinates; use
+  /// [focusOn] to supply a target in MuJoCo Z-up coordinates instead.
   final orbit = scene.OrbitCameraController(
     distance: 7,
     azimuth: -1.0,
@@ -200,18 +197,30 @@ class MujocoViewerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Synchronizes compiled geom poses and the viewport used by infinite planes.
-  ///
-  /// The viewer widget supplies [aspectRatio] automatically. Custom rendering loops
-  /// should pass their render target's width divided by height.
+  MjSceneState? _pendingState;
+
+  /// Retains only the latest state until the next render frame.
+  /// The caller must supply snapshots belonging to this model.
+  void update(MjSceneState state) {
+    if (state.geomCount != model.ngeom) {
+      throw ArgumentError('State geom count does not match the model');
+    }
+    _pendingState = state;
+  }
+
+  /// Applies the latest snapshot once per render frame; never reads live data.
   void sync({double? aspectRatio}) {
     if (aspectRatio != null && aspectRatio.isFinite && aspectRatio > 0) {
       _aspectRatio = aspectRatio;
     }
+    final state = _pendingState;
+    if (state == null) return;
+    _pendingState = null;
     for (final entry in nodes.entries) {
+      final id = entry.key;
       entry.value.localTransform = geomTransform(
-        data.geomPosition(entry.key).toList(),
-        data.geomRotation(entry.key).toList(),
+        state.positions.sublist(id * 3, id * 3 + 3),
+        state.rotations.sublist(id * 9, id * 9 + 9),
       );
     }
   }
@@ -245,6 +254,19 @@ class MujocoViewerController extends ChangeNotifier {
     }
   }
 
+  /// Sets the camera's orbit target in MuJoCo Z-up world coordinates.
+  ///
+  /// Keeps the current viewing angle and distance. Gesture controls remain active.
+  void focusOn({required double x, required double y, required double z}) {
+    if (!x.isFinite || !y.isFinite || !z.isFinite) {
+      throw ArgumentError('Camera target must be finite');
+    }
+    orbit.target = viewerPosition([x, y, z]);
+    orbit.update(0);
+    _syncInfinitePlanes();
+  }
+
+  /// Frames the compiled model bounds while preserving the viewing angle.
   void frameModel() {
     final center = viewerPosition(model.center);
     orbit.target = center;
@@ -266,6 +288,7 @@ class MujocoViewerController extends ChangeNotifier {
     _meshCache.clear();
     _textureCache.clear();
     _infinitePlanes.clear();
+    _pendingState = null;
     super.dispose();
   }
 }

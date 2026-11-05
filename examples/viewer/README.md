@@ -44,7 +44,7 @@ XML 按相对路径排序，默认打开第一项；左侧 Models 侧边栏列�
 
 拖拽环绕、滚轮缩放、右键平移；Run/Pause、单步、Reset、倍率、首执行器输入和 Group 显示开关。LingLong Group 1 是视觉 mesh，Group 3 是碰撞几何，默认隐藏 3 及以上组。
 
-真实机器人暂停打开，未加载站立策略；Run 后是无控制物理运动。当前 viewer 支持基本形状与三角 mesh，尚未迁移原模型纹理、灯光、hfield/flex/tendon 和接触力可视化。带材质地面使用中性灰回退，与原生 MuJoCo checker 地面尚不一致。数值循环仍在 UI isolate，超载时会慢于实时。
+真实机器人暂停打开，未加载站立策略；Run 后是无控制物理运动。当前 viewer 支持基本形状与三角 mesh，已支持平面 2D 纹理与无限地面，灯光、非平面纹理、hfield/flex/tendon 和接触力可视化仍待实现。独立定时器驱动物理并发布不可变快照，Viewer 按自己的帧率消费最新状态；两者仍在 UI isolate，超载时会慢于实时。
 
 ## 验证
 
@@ -57,7 +57,7 @@ dart run tool/native_smoke.dart
 # dart run tool/verify_native_assets.dart
 ```
 
-数值包 10 项、Flutter 资产加载 1 项、Viewer 2 项及本应用 6 项回归测试均通过。Linux 已实际显示 LingLong：37 qpos、36 DOF、30 controls、45 geoms、31 meshes。MuJoCo 数值 smoke 的进程未加载 libpython，本应用依赖图也已不包含 py_embed。
+数值包 20 项、Flutter 资产加载 1 项、Viewer 15 项及本应用 13 项回归测试均通过。Linux 已实际显示 LingLong：37 qpos、36 DOF、30 controls、45 geoms、31 meshes。MuJoCo 数值 smoke 的进程未加载 libpython，本应用依赖图也已不包含 py_embed。
 
 Web smoke 验证真实 WASM 物理步进、geom 位姿、控制数组、执行器/传感器元信息、VFS mesh、借用视图失效检查和 Flutter Scene 绘制。结果见 [web_smoke_result.json](docs/web_smoke_result.json)。
 

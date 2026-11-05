@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
@@ -35,6 +36,7 @@ class _SmokeState extends State<Smoke> {
   MujocoSimulation? sim;
   MujocoViewerController? viewer;
   Object? error;
+  final firstStats = Completer<MujocoViewerStats>();
   @override
   void initState() {
     super.initState();
@@ -255,10 +257,7 @@ class _SmokeState extends State<Smoke> {
         meshVfs.dispose();
       }
       s.reset(demoPose: true);
-      final controller = await MujocoViewerController.create(
-        model: s.model,
-        data: s.data,
-      );
+      final controller = await MujocoViewerController.create(model: s.model);
       if (!mounted) {
         controller.dispose();
         s.dispose();
@@ -266,9 +265,35 @@ class _SmokeState extends State<Smoke> {
       }
       setState(() => viewer = controller);
       await WidgetsBinding.instance.endOfFrame;
+      s.reset(demoPose: true);
+      s.reset();
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      final bob = controller.nodes[4]!.localTransform.getTranslation();
+      check(
+        (bob.z - s.geomPosition(4)[2]).abs() < 1e-6,
+        'Viewer failed to apply the newest streamed snapshot',
+      );
+      final savedBob = bob.clone();
+      // Unpublished live changes must never leak into the rendered scene.
+      s.data.qpos[0] = .9;
+      mj_forward(s.model, s.data);
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      check(
+        (controller.nodes[4]!.localTransform.getTranslation() - savedBob)
+                .length <
+            1e-6,
+        'Viewer read live data without a published snapshot',
+      );
+      s.reset(demoPose: true);
       final originalPose = s.data.geomPosition(0).toList();
-      controller.orbit.target = vm.Vector3(10000, 0, -10000);
-      controller.orbit.update(1);
+      final distance = controller.orbit.distance;
+      controller.focusOn(x: 10000, y: 10000, z: 0);
+      check(
+        controller.orbit.target == vm.Vector3(10000, 0, -10000),
+        'Camera focus failed to convert MuJoCo Z-up coordinates',
+      );
+      controller.orbit.orbitBy(.2, .1);
+      controller.orbit.dollyBy(1);
       await Future<void>.delayed(const Duration(milliseconds: 150));
       final patch = controller.nodes[0]!.children.first.position;
       check(
@@ -279,7 +304,18 @@ class _SmokeState extends State<Smoke> {
         s.data.geomPosition(0).toList().join(',') == originalPose.join(','),
         'Visual recentering changed the physical plane',
       );
+      check(
+        controller.orbit.distance < distance,
+        'Camera dolly control failed',
+      );
       controller.frameModel();
+      final stats = await firstStats.future.timeout(
+        const Duration(seconds: 15),
+      );
+      check(
+        stats.fps > 0 && stats.fps <= 35 && stats.frames > 0,
+        'Render cadence report or frame-rate cap failed',
+      );
       report({
         'status': 'passed',
         'version': s.version,
@@ -299,6 +335,9 @@ class _SmokeState extends State<Smoke> {
           'compiled ground texture and repeat',
           'public VFS ownership and reuse',
           'Flutter viewer mounted',
+          'latest streamed state and no live data reads',
+          'render FPS reports and independent cap',
+          'camera focus, orbit and dolly controls',
           'infinite plane follows distant camera without moving physics',
         ],
       });
@@ -320,7 +359,16 @@ class _SmokeState extends State<Smoke> {
     color: const Color(0xff10171d),
     child: viewer == null
         ? Center(child: Text(error == null ? 'Loading WASM…' : '$error'))
-        : MujocoViewer(controller: viewer!),
+        : MujocoViewer(
+            model: sim!.model,
+            states: sim!.states,
+            initialState: sim!.state,
+            controller: viewer!,
+            maxFrameRate: 30,
+            onStats: (stats) {
+              if (!firstStats.isCompleted) firstStats.complete(stats);
+            },
+          ),
   );
 }
 

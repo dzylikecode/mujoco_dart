@@ -27,7 +27,7 @@ docs/
 | [mujoco](packages/mujoco) | Pure Dart numerical API, compiled geometry metadata and resource lifetimes |
 | [mujoco_web](packages/mujoco_web) | Locally bundled official MuJoCo 3.12.0 JS/WASM, declared as web-only assets |
 | [mujoco_flutter](packages/mujoco_flutter) | Native/web initialization and numerical API exports |
-| [mujoco_viewer](packages/mujoco_viewer) | Passive Flutter viewer using the public model/data API |
+| [mujoco_viewer](packages/mujoco_viewer) | Flutter viewer consuming a model and immutable scene-state stream |
 
 ## Get started
 

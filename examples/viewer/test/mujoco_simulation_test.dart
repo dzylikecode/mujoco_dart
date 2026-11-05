@@ -1,4 +1,7 @@
 import 'dart:io';
+
+import 'package:mujoco/mujoco.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter_scene_lab/simulation.dart';
@@ -16,6 +19,34 @@ void main() {
     ),
   );
   tearDown(() => sim.dispose());
+
+  test(
+    'Simulation publishes owned states and runs without a rendering widget',
+    () async {
+      final received = <MjSceneState>[];
+      final subscription = sim.states.listen(received.add);
+      sim.start();
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      sim.pause();
+      await Future<void>.delayed(Duration.zero);
+      expect(sim.time, greaterThan(0));
+      expect(received, isNotEmpty);
+      final paused = sim.time;
+      final snapshot = received.last;
+      final saved = snapshot.positions.toList();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(sim.time, paused);
+      sim.reset();
+      sim.singleStep();
+      sim.kick();
+      await Future<void>.delayed(Duration.zero);
+      expect(received[received.length - 3].time, 0);
+      expect(received.last.time, closeTo(sim.timestep, 1e-12));
+      expect(snapshot.positions, saved);
+      sim.dispose();
+      await subscription.asFuture<void>();
+    },
+  );
 
   // 原生步进必须推进时间并产生重力运动，不能用画面动画代替物理状态。
   test('Native physics advances time and moves a free body under gravity', () {
