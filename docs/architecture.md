@@ -44,9 +44,9 @@ model/data 仅通过显式、幂等的 `dispose()` 释放；数组和位姿视�
 
 已验证 Linux x64 native 与 Chromium Web：数值步进、资源释放、控制数组、传感器、VFS 模型资产、mesh 与共享 Viewer。原生 AOT 资产裁剪脚本验证了“使用原生调用时打包库、未使用时移除库”。
 
-单元/回归测试：核心包 18 项、Flutter 资产接入 1 项、Viewer 6 项、实验应用 12 项；浏览器 smoke 另有物理/数组/元数据/VFS/绘制检查。浏览器测试入口和日志位于示例 `examples/viewer/tool/web_smoke_app.dart`、`examples/viewer/tool/run_web_smoke.mjs`、`examples/viewer/docs/web_smoke_result.json`。
+单元/回归测试：核心包 18 项、Flutter 资产接入 1 项、Viewer 10 项、实验应用 12 项；浏览器 smoke 另有物理/数组/元数据/VFS/绘制检查。浏览器测试入口和日志位于示例 `examples/viewer/tool/web_smoke_app.dart`、`examples/viewer/tool/run_web_smoke.mjs`、`examples/viewer/docs/web_smoke_result.json`。
 
-尚未实现完整原生 MuJoCo viewer 的所有功能。非平面纹理、cube/skybox、原模型照明、hfield/flex/tendon、接触力箭头等仍待扩展；无限地面仍以有限区域显示。地面已接入模型编译后的 2D 纹理与 texrepeat/texuniform，不再强制覆盖颜色或添加厚度。没有站立策略或稳定控制器，机器人按 Run 后可能倒地。数值循环仍在调用者 isolate；后续可把 native 数值放到独立 isolate、Web 数值放到 worker，再通过位姿快照同步 Viewer。其他 native 平台尚未实机验证。
+尚未实现完整原生 MuJoCo viewer 的所有功能。非平面纹理、cube/skybox、原模型照明、hfield/flex/tendon、接触力箭头等仍待扩展；无限地面使用覆盖视锥、随相机移动的网格，并按纹理周期对齐；模型的物理位姿不变。地面已接入模型编译后的 2D 纹理与 texrepeat/texuniform，不再强制覆盖颜色或添加厚度。没有站立策略或稳定控制器，机器人按 Run 后可能倒地。数值循环仍在调用者 isolate；后续可把 native 数值放到独立 isolate、Web 数值放到 worker，再通过位姿快照同步 Viewer。其他 native 平台尚未实机验证。
 
 补充验证：常规实验应用也通过 `flutter build web --wasm`，Chromium 确认实际加载 `main.dart.wasm` 与 MuJoCo WASM，仿真时间正常推进且无未捕获异常。数值/Flutter 回归测试全部通过，四个包和实验应用的严格静态分析通过。
 

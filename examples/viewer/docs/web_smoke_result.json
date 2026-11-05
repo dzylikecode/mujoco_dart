@@ -16,7 +16,8 @@
     "VFS assets",
     "compiled ground texture and repeat",
     "public VFS ownership and reuse",
-    "Flutter viewer mounted"
+    "Flutter viewer mounted",
+    "infinite plane follows distant camera without moving physics"
   ],
   "errors": [],
   "resources": [

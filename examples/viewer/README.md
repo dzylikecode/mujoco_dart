@@ -84,4 +84,4 @@ node tool/run_web_smoke.mjs
 
 ![Folder drop and model switching](docs/drop_preview.png)
 
-默认示例的地面使用 MJCF 定义的棋盘格和十字标记。导入模型时，plane 显示模型编译后的 2D 纹理、颜色及重复设置；无纹理的地面保持原色。无限平面仍以有限可视区域显示。
+默认示例的地面使用 MJCF 定义的棋盘格和十字标记。导入模型时，plane 显示模型编译后的 2D 纹理、颜色及重复设置；无纹理的地面保持原色。size 为 0 的平面轴随相机移动并覆盖视锥，按纹理周期对齐，平移和缩放时不会露出地面边缘；正数尺寸仍保留有限范围。

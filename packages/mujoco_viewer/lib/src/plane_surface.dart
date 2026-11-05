@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:mujoco/mujoco.dart';
+import 'package:vector_math/vector_math.dart' as vm;
 
 // Matches MuJoCo 3.12's classic plane UVs and texture-matrix scaling.
 ({Float32List positions, Float32List normals, Float32List texCoords})
@@ -84,4 +85,50 @@ Uint8List textureRgba(MjTextureInfo texture) {
     };
   }
   return rgba;
+}
+
+// Bounds every point in a finite camera frustum, including wide and orthographic
+// views. Scene camera projections use depth 0..1 before renderer adjustments.
+double projectionReach(vm.Matrix4 projection) {
+  final inverse = vm.Matrix4.copy(projection);
+  if (inverse.invert() == 0) {
+    throw ArgumentError('Camera projection is singular');
+  }
+  var reach = 0.0;
+  for (final x in [-1.0, 1.0]) {
+    for (final y in [-1.0, 1.0]) {
+      for (final z in [0.0, 1.0]) {
+        final point = inverse.transform(vm.Vector4(x, y, z, 1));
+        final distance =
+            math.sqrt(
+              point.x * point.x + point.y * point.y + point.z * point.z,
+            ) /
+            point.w.abs();
+        if (!distance.isFinite) {
+          throw ArgumentError('Camera needs a finite far clip');
+        }
+        reach = math.max(reach, distance);
+      }
+    }
+  }
+  return reach;
+}
+
+// MuJoCo snaps the visual center by 2 * (2 / texrepeat). Two complete repeats
+// preserve the sampled texture phase while the finite patch follows the eye.
+({vm.Vector3 center, double halfExtent}) infinitePlanePlacement(
+  MjGeomInfo geom,
+  vm.Vector3 localEye, {
+  required double viewReach,
+}) {
+  final center = vm.Vector3.zero();
+  var margin = 0.0;
+  for (var axis = 0; axis < 2; axis++) {
+    if (geom.size[axis] > 0) continue;
+    final repeat = geom.textureRepeat[axis];
+    final step = repeat > 0 ? 4 / repeat : 4.0;
+    center[axis] = (localEye[axis] / step).roundToDouble() * step;
+    margin = math.max(margin, step * 0.5);
+  }
+  return (center: center, halfExtent: viewReach * 1.05 + margin);
 }

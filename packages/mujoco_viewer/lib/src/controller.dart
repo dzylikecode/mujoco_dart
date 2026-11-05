@@ -51,6 +51,8 @@ class MujocoViewerController extends ChangeNotifier {
     world.add(root);
     cameraNode.addComponent(camera);
     cameraNode.addComponent(orbit);
+    // Components run in attachment order, after this frame's camera movement.
+    cameraNode.addComponent(_InfinitePlanesUpdater(this));
     world.add(cameraNode);
     for (var i = 0; i < model.ngeom; i++) {
       _addGeom(i);
@@ -76,6 +78,8 @@ class MujocoViewerController extends ChangeNotifier {
   final Map<int, scene.Node> nodes = {};
   final Map<int, scene.Geometry> _meshCache = {};
   final Map<int, scene.Texture2D> _textureCache = {};
+  final Map<int, _InfinitePlanePatch> _infinitePlanes = {};
+  double _aspectRatio = 1;
   final List<String> warnings = [];
   final Set<int> groups = {};
   final Set<int> hiddenGroups = {};
@@ -98,6 +102,9 @@ class MujocoViewerController extends ChangeNotifier {
           positions: surface.positions,
           normals: surface.normals,
           texCoords: surface.texCoords,
+          storage: size[0] <= 0 || size[1] <= 0
+              ? scene.GeometryStorage.updatable
+              : scene.GeometryStorage.fixed,
         );
       case 2:
         geometry = scene.SphereGeometry(radius: size[0]);
@@ -155,6 +162,14 @@ class MujocoViewerController extends ChangeNotifier {
         math.pi / 2,
       );
     }
+    if (type == 0 && (size[0] <= 0 || size[1] <= 0)) {
+      _infinitePlanes[id] = _InfinitePlanePatch(
+        geom,
+        shape,
+        geometry as scene.MeshGeometry,
+        math.max(20, model.extent * 4),
+      );
+    }
     final node = scene.Node(name: model.geomById(id).name)..add(shape);
     nodes[id] = node;
     groups.add(geom.group);
@@ -185,12 +200,48 @@ class MujocoViewerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void sync() {
+  /// Synchronizes compiled geom poses and the viewport used by infinite planes.
+  ///
+  /// The viewer widget supplies [aspectRatio] automatically. Custom rendering loops
+  /// should pass their render target's width divided by height.
+  void sync({double? aspectRatio}) {
+    if (aspectRatio != null && aspectRatio.isFinite && aspectRatio > 0) {
+      _aspectRatio = aspectRatio;
+    }
     for (final entry in nodes.entries) {
       entry.value.localTransform = geomTransform(
         data.geomPosition(entry.key).toList(),
         data.geomRotation(entry.key).toList(),
       );
+    }
+  }
+
+  void _syncInfinitePlanes() {
+    if (_infinitePlanes.isEmpty) return;
+    final reach = projectionReach(
+      camera.projection.getProjectionMatrix(_aspectRatio),
+    );
+    final eye = camera.toCamera().position;
+    final mujocoEye = vm.Vector3(eye.x, -eye.z, eye.y);
+    for (final entry in _infinitePlanes.entries) {
+      final patch = entry.value;
+      final inverse = vm.Matrix4.inverted(nodes[entry.key]!.localTransform);
+      final localEye = inverse.transform3(mujocoEye);
+      final placement = infinitePlanePlacement(
+        patch.geom,
+        localEye,
+        viewReach: reach,
+      );
+      if ((placement.halfExtent - patch.halfExtent).abs() > 1e-6) {
+        final surface = planeSurface(
+          patch.geom,
+          infiniteHalfExtent: placement.halfExtent,
+        );
+        patch.geometry.updatePositions(surface.positions);
+        patch.geometry.updateTexCoords(surface.texCoords);
+        patch.halfExtent = placement.halfExtent;
+      }
+      patch.shape.position = placement.center;
     }
   }
 
@@ -204,6 +255,7 @@ class MujocoViewerController extends ChangeNotifier {
       ),
     );
     orbit.update(1);
+    _syncInfinitePlanes();
   }
 
   @override
@@ -213,6 +265,21 @@ class MujocoViewerController extends ChangeNotifier {
     nodes.clear();
     _meshCache.clear();
     _textureCache.clear();
+    _infinitePlanes.clear();
     super.dispose();
   }
+}
+
+class _InfinitePlanePatch {
+  _InfinitePlanePatch(this.geom, this.shape, this.geometry, this.halfExtent);
+  final MjGeomInfo geom;
+  final scene.Node shape;
+  final scene.MeshGeometry geometry;
+  double halfExtent;
+}
+
+class _InfinitePlanesUpdater(final MujocoViewerController controller)
+    extends scene.Component {
+  @override
+  void update(double deltaSeconds) => controller._syncInfinitePlanes();
 }

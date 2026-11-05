@@ -1,5 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:vector_math/vector_math.dart' as vm;
+import 'package:flutter_scene/scene.dart' as scene;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mujoco/mujoco.dart';
 import 'package:mujoco_viewer/src/plane_surface.dart';
@@ -7,6 +10,7 @@ import 'package:mujoco_viewer/src/plane_surface.dart';
 MjGeomInfo floor({
   List<double> size = const [2, 3, .1],
   bool uniform = false,
+  List<double> repeat = const [2, 4],
 }) => MjGeomInfo(
   id: 0,
   name: 'floor',
@@ -18,11 +22,68 @@ MjGeomInfo floor({
   roughness: 1,
   meshId: -1,
   materialId: 0,
-  textureRepeat: const [2, 4],
+  textureRepeat: repeat,
   textureUniform: uniform,
 );
 
 void main() {
+  test(
+    'Infinite patches follow distant cameras without changing finite axes',
+    () {
+      final patch = infinitePlanePlacement(
+        floor(size: [0, 3, .1]),
+        vm.Vector3(10001.3, -7000, 20),
+        viewReach: 100,
+      );
+      expect(patch.center.x, 10002);
+      expect(patch.center.y, 0);
+      expect(patch.center.z, 0);
+      expect(patch.halfExtent, greaterThan(100 + .7));
+    },
+  );
+
+  test('Recentering preserves whole texture periods in both directions', () {
+    final geom = floor(size: [0, 0, .1]);
+    final a = infinitePlanePlacement(
+      geom,
+      vm.Vector3(-123.4, 456.7, 8),
+      viewReach: 100,
+    );
+    final b = infinitePlanePlacement(
+      geom,
+      vm.Vector3(234.5, -789.2, 8),
+      viewReach: 100,
+    );
+    for (var axis = 0; axis < 2; axis++) {
+      final periods =
+          (b.center[axis] - a.center[axis]) * .5 * geom.textureRepeat[axis];
+      expect(periods, closeTo(periods.roundToDouble(), 1e-9));
+    }
+  });
+
+  test('Nonpositive repeat uses the same stable fallback as plane UVs', () {
+    final geom = floor(size: [0, 0, .1], repeat: [0, -1]);
+    final patch = infinitePlanePlacement(
+      geom,
+      vm.Vector3(5, -5, 0),
+      viewReach: 100,
+    );
+    expect(patch.center, vm.Vector3(4, -4, 0));
+  });
+
+  test('Patch bounds cover wide perspective and orthographic frusta', () {
+    final perspective = scene.PerspectiveProjection();
+    final normal = projectionReach(perspective.getProjectionMatrix(1));
+    final wide = projectionReach(perspective.getProjectionMatrix(4));
+    expect(wide, greaterThan(normal));
+    expect(normal, greaterThan(1000));
+    final orthographic = scene.OrthographicProjection();
+    expect(
+      projectionReach(orthographic.getProjectionMatrix(4)),
+      greaterThanOrEqualTo(1000),
+    );
+  });
+
   test(
     'Plane vertices stay exactly on the collision surface with upward winding',
     () {

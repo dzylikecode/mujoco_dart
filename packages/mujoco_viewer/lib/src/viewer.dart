@@ -10,14 +10,16 @@ class MujocoViewer extends StatelessWidget {
   final MujocoViewerController controller;
   final void Function(Duration elapsed, double deltaSeconds)? onTick;
   @override
-  Widget build(BuildContext context) => scene.CameraControls(
-    controller: controller.orbit,
-    child: scene.SceneView(
-      controller.world,
-      onTick: (elapsed, dt) {
-        onTick?.call(elapsed, dt);
-        controller.sync();
-      },
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, bounds) => scene.CameraControls(
+      controller: controller.orbit,
+      child: scene.SceneView(
+        controller.world,
+        onTick: (elapsed, dt) {
+          onTick?.call(elapsed, dt);
+          controller.sync(aspectRatio: bounds.maxWidth / bounds.maxHeight);
+        },
+      ),
     ),
   );
 }

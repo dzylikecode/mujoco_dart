@@ -3,6 +3,8 @@ import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 import 'dart:typed_data';
 
+import 'package:vector_math/vector_math.dart' as vm;
+
 import 'package:flutter_scene_lab/model_assets.dart';
 import 'package:flutter_scene_lab/simulation.dart';
 
@@ -263,28 +265,42 @@ class _SmokeState extends State<Smoke> {
         return;
       }
       setState(() => viewer = controller);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        report({
-          'status': 'passed',
-          'version': s.version,
-          'geoms': s.geomCount,
-          'meshes': s.model.nmesh,
-          'checks': [
-            'gravity',
-            'fixed step',
-            'geom poses',
-            'control arrays',
-            'actuator metadata',
-            'mesh snapshots',
-            'body force views',
-            'sensor metadata',
-            'disposed views',
-            'VFS assets',
-            'compiled ground texture and repeat',
-            'public VFS ownership and reuse',
-            'Flutter viewer mounted',
-          ],
-        });
+      await WidgetsBinding.instance.endOfFrame;
+      final originalPose = s.data.geomPosition(0).toList();
+      controller.orbit.target = vm.Vector3(10000, 0, -10000);
+      controller.orbit.update(1);
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      final patch = controller.nodes[0]!.children.first.position;
+      check(
+        patch.x > 9900 && patch.y > 9900 && patch.z == 0,
+        'Infinite ground did not follow the distant camera',
+      );
+      check(
+        s.data.geomPosition(0).toList().join(',') == originalPose.join(','),
+        'Visual recentering changed the physical plane',
+      );
+      controller.frameModel();
+      report({
+        'status': 'passed',
+        'version': s.version,
+        'geoms': s.geomCount,
+        'meshes': s.model.nmesh,
+        'checks': [
+          'gravity',
+          'fixed step',
+          'geom poses',
+          'control arrays',
+          'actuator metadata',
+          'mesh snapshots',
+          'body force views',
+          'sensor metadata',
+          'disposed views',
+          'VFS assets',
+          'compiled ground texture and repeat',
+          'public VFS ownership and reuse',
+          'Flutter viewer mounted',
+          'infinite plane follows distant camera without moving physics',
+        ],
       });
     } catch (e, stack) {
       report({'status': 'failed', 'error': '$e', 'stack': '$stack'});
